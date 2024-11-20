@@ -1,0 +1,5 @@
+export * from './delete-document.controller'
+export * from './fetch-document.controller'
+export * from './create-document.controller'
+export * from './fetch-param-document.controller'
+export * from './fetch-unique-document.controller'

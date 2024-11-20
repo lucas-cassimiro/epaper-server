@@ -1,0 +1,79 @@
+name: CI/CD Pipeline
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [develop]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16.3
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: epaper-db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      minio:
+        image: quay.io/minio/minio
+        env:
+          MINIO_ROOT_USER: ROOTNAME
+          MINIO_ROOT_PASSWORD: CHANGEME123
+        ports:
+          - 9000:9000
+          - 9001:9001
+        options: >-
+          --health-cmd "curl http://localhost:9000/minio/health/live"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        volumes:
+          - ./data/minio:/data
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run tests
+        run: pnpm run test
+        env:
+          DATABASE_URL: postgres://user:password@localhost:5432/epaper-db
+          MINIO_ENDPOINT: localhost
+          MINIO_PORT: 9000
+          MINIO_ACCESS_KEY: minioadmin
+          MINIO_SECRET_KEY: minioadmin
+          MINIO_USE_SSL: false
+
+      - name: Build
+        run: pnpm run build
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Deploy to production
+        run: |
+          echo "Add your deployment steps here"
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
