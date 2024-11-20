@@ -17,7 +17,6 @@ import {
 } from '@ts-rest/nest'
 import { z } from 'zod'
 import { FileInterceptor } from '@nestjs/platform-express'
-import { Response as ExpressResponse } from 'express'
 import { DocumentMapper } from 'src/infra/database/drizzle/mappers/document.mapper'
 
 const c = initContract()
